@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="webpack是插件组合型框架，它的绝大多数功能都是通过插件来实现的，webpack的插件有自身实现的apply方法，他在webpack的生命周期中注册不同的回调函数，插件有两个阶段：注册阶段：插件会在自己需要的webpack生命周期上注册相关的回调函数。编译阶段：webpack在编译阶段的不同生命周期中，通过applyPlugins()方法调用所有在该生命周期中注册的回调。 webpack的入口">
+<meta property="og:type" content="article">
+<meta property="og:title" content="webpack处理流程浅析">
+<meta property="og:url" content="https://alex3347.github.io/TempBlogStore/2018/09/21/20180921/index.html">
+<meta property="og:site_name" content="夜雨声繁">
+<meta property="og:description" content="webpack是插件组合型框架，它的绝大多数功能都是通过插件来实现的，webpack的插件有自身实现的apply方法，他在webpack的生命周期中注册不同的回调函数，插件有两个阶段：注册阶段：插件会在自己需要的webpack生命周期上注册相关的回调函数。编译阶段：webpack在编译阶段的不同生命周期中，通过applyPlugins()方法调用所有在该生命周期中注册的回调。 webpack的入口">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-02-13T03:03:11.657Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="webpack处理流程浅析">
+<meta name="twitter:description" content="webpack是插件组合型框架，它的绝大多数功能都是通过插件来实现的，webpack的插件有自身实现的apply方法，他在webpack的生命周期中注册不同的回调函数，插件有两个阶段：注册阶段：插件会在自己需要的webpack生命周期上注册相关的回调函数。编译阶段：webpack在编译阶段的不同生命周期中，通过applyPlugins()方法调用所有在该生命周期中注册的回调。 webpack的入口">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://alex3347.github.io/TempBlogStore/2018/09/21/20180921/">
+
+
+
+
+
+  <title>webpack处理流程浅析 | 夜雨声繁</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">夜雨声繁</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://alex3347.github.io/TempBlogStore/2018/09/21/20180921/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://blog.happyday.site/dis/img/head.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="夜雨声繁">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">webpack处理流程浅析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-21T21:12:13+08:00">
+                2018-09-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>webpack是插件组合型框架，它的绝大多数功能都是通过插件来实现的，webpack的插件有自身实现的apply方法，他在webpack的生命周期中注册不同的回调函数，插件有两个阶段：<br>注册阶段：插件会在自己需要的webpack生命周期上注册相关的回调函数。<br>编译阶段：webpack在编译阶段的不同生命周期中，通过applyPlugins()方法调用所有在该生命周期中注册的回调。</p>
+<p>webpack的入口文件有两个，分别用于命令行模式和nodejs调用模式。其中bin/webpack.js是检测是否存在webpack-cli或者webpack-command，如果存在再根据安装情况进行调用；而lib/webpack.js是node中直接调用的入口。我们后面分析的webpack.js都是lib下的webpack.js，后续代码分析中省去了异常状态处理部分，我们暂时只关心核心逻辑</p>
+<p>在bin/webpack.js中，我们以安装了webpack-cli为例，它会解析webpack-cli中package.json的绝对路径，然后调用绝对路径bin文件夹中的cli.js，源码如下：</p>
+<h4 id="bin-webpack-js"><a href="#bin-webpack-js" class="headerlink" title="bin/webpack.js"></a>bin/webpack.js</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (installedClis.length === <span class="number">1</span>) &#123;</span><br><span class="line">	<span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">"path"</span>);</span><br><span class="line">	<span class="keyword">const</span> pkgPath = <span class="built_in">require</span>.resolve(<span class="string">`<span class="subst">$&#123;installedClis[<span class="number">0</span>].package&#125;</span>/package.json`</span>);</span><br><span class="line">	<span class="comment">// eslint-disable-next-line node/no-missing-require</span></span><br><span class="line">	<span class="keyword">const</span> pkg = <span class="built_in">require</span>(pkgPath);</span><br><span class="line">	<span class="comment">// eslint-disable-next-line node/no-missing-require</span></span><br><span class="line">	<span class="built_in">require</span>(path.resolve(</span><br><span class="line">		path.dirname(pkgPath),</span><br><span class="line">		pkg.bin[installedClis[<span class="number">0</span>].binName]</span><br><span class="line">	));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="webpack-cli-cli-js"><a href="#webpack-cli-cli-js" class="headerlink" title="webpack-cli/cli.js"></a>webpack-cli/cli.js</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> compiler = webpack(options);</span><br><span class="line">compiler.run(compilerCallback);</span><br></pre></td></tr></table></figure>
+<p>在上方的cli.js源码中，仅展示了主要操作，它会调用lib/webpack.js文件中的webpack函数生成compiler，之后调用compiler的生命周期run。</p>
+<h4 id="lib-webpack-js"><a href="#lib-webpack-js" class="headerlink" title="lib/webpack.js"></a>lib/webpack.js</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> webpack = <span class="function">(<span class="params">options, callback</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">//对开发者配置的options参数进行处理，调用OptionsDefaulter类的process方法进行遍历处理</span></span><br><span class="line">    options = <span class="keyword">new</span> WebpackOptionsDefaulter().process(options);</span><br><span class="line">    <span class="comment">//compiler是webpack的编译器对象，包含所有webpack主环境相关内容</span></span><br><span class="line">    compiler = <span class="keyword">new</span> Compiler(options.context);</span><br><span class="line">    compiler.options = options;</span><br><span class="line">    <span class="comment">//给complier对象上挂载NodeEnvironmentPlugin相关插件</span></span><br><span class="line">    <span class="keyword">new</span> NodeEnvironmentPlugin().apply(compiler);</span><br><span class="line">    <span class="keyword">if</span> (options.plugins &amp;&amp; <span class="built_in">Array</span>.isArray(options.plugins)) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">const</span> plugin <span class="keyword">of</span> options.plugins) &#123;</span><br><span class="line">            plugin.apply(compiler);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//触发environment和afterEnvironment上注册的事件</span></span><br><span class="line">    compiler.hooks.environment.call();</span><br><span class="line">    compiler.hooks.afterEnvironment.call();</span><br><span class="line">    <span class="comment">//根据开发者的配置，注册webpack内部插件,参考下方源码</span></span><br><span class="line">    compiler.options = <span class="keyword">new</span> WebpackOptionsApply().process(options, compiler);</span><br><span class="line">    <span class="keyword">return</span> compiler;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<h4 id="WebpackOptionsApply"><a href="#WebpackOptionsApply" class="headerlink" title="WebpackOptionsApply"></a>WebpackOptionsApply</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">WebpackOptionsApply</span> <span class="keyword">extends</span> <span class="title">OptionsApply</span> </span>&#123;</span><br><span class="line">    process(options, compiler) &#123;</span><br><span class="line">        <span class="comment">//挂载EntryOptionPlugin相关插件</span></span><br><span class="line">        <span class="keyword">new</span> EntryOptionPlugin().apply(compiler);</span><br><span class="line">        <span class="comment">//触发entryOption</span></span><br><span class="line">        <span class="keyword">var</span> a = compiler.hooks.entryOption.call(options.context, options.entry);</span><br><span class="line">        <span class="comment">//触发afterPlugins</span></span><br><span class="line">        compiler.hooks.afterPlugins.call(compiler);</span><br><span class="line">        <span class="comment">//触发afterResolvers</span></span><br><span class="line">        compiler.hooks.afterResolvers.call(compiler);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中EntryOptionPlugin是对入口Entry的处理</p>
+<h4 id="EntryOptionPlugin"><a href="#EntryOptionPlugin" class="headerlink" title="EntryOptionPlugin"></a>EntryOptionPlugin</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> itemToPlugin = <span class="function">(<span class="params">context, item, name</span>) =&gt;</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">Array</span>.isArray(item)) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">new</span> MultiEntryPlugin(context, item, name);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">new</span> SingleEntryPlugin(context, item, name);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">EntryOptionPlugin</span> </span>&#123;</span><br><span class="line">	<span class="comment">//注册回调到hooks.entryOption上，上文调用compiler.hooks.entryOption.call时触发</span></span><br><span class="line">	apply(compiler) &#123;</span><br><span class="line">		compiler.hooks.entryOption.tap(<span class="string">"EntryOptionPlugin"</span>, (context, entry) =&gt; &#123;</span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">typeof</span> entry === <span class="string">"string"</span> || <span class="built_in">Array</span>.isArray(entry)) &#123;</span><br><span class="line">				itemToPlugin(context, entry, <span class="string">"main"</span>).apply(compiler);</span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> entry === <span class="string">"object"</span>) &#123;</span><br><span class="line">				<span class="keyword">for</span> (<span class="keyword">const</span> name <span class="keyword">of</span> <span class="built_in">Object</span>.keys(entry)) &#123;</span><br><span class="line">					itemToPlugin(context, entry[name], name).apply(compiler);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> entry === <span class="string">"function"</span>) &#123;</span><br><span class="line">				<span class="keyword">new</span> DynamicEntryPlugin(context, entry).apply(compiler);</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>从以上几个函数可以看出，插件主要是向compiler上的生命周期上挂载一些回调函数，当执行到该阶段时触发。</p>
+<p>ps: webpack内部的发布订阅用的是官方自己封装的库，<a href="https://github.com/webpack/tapable" target="_blank" rel="noopener">tapable</a>，这里就不单独展开了。</p>
+<p>之后调用compiler的生命周期run，compiler.run方法会启动编译，然后在不同的生命周期调用对应的回调函数。compiler的生命周期文档中有提及，<a href="https://webpack.js.org/api/compiler-hooks/" target="_blank" rel="noopener">webpack hooks</a> ，其中主要的有：</p>
+<p>1.before-run</p>
+<p>2.run</p>
+<p>3.before-compile</p>
+<p>4.compile</p>
+<p>5.this-compilation</p>
+<p>6.compilation：代码编译准备</p>
+<p>7.make：代码编译</p>
+<p>8.after-compile：根据编译结果没合并出最终的文件名和内容</p>
+<p>这些生命周期的调用顺序在compile.js中有体现，通过this.hooks.[‘生命周期’].callAsync的回调函数来指定生命周期执行顺序。</p>
+<p>代码编译准备 阶段compilation会注册好不同类型的module对应的 factory。</p>
+<p>代码编译make 阶段，会从 entry 开始进行两步操作：</p>
+<p>首先是调用 loaders 对模块的原始代码进行编译，转换成标准的JS代码</p>
+<p>然后调用 acorn 对js代码进行语法分析，然后收集其中的依赖关系。每个模块都会记录自己的依赖关系，从而形成一颗关系树(webpack直接使用acorn解析代码，并没有使用babel)</p>
+<p>最后调用 compilation.seal 进入 after-compile阶段，根据之前收集的依赖，决定生成多少文件，每个文件的内容是什么</p>
+<p>ps：以上只是对webpack处理流程的简单分析，实际要复杂很多，后续笔者会针对不同的功能模块单独进行分析。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/07/28/20180728/" rel="next" title="react-redux源码浅析">
+                <i class="fa fa-chevron-left"></i> react-redux源码浅析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/20/20181020/" rel="prev" title="Nodejs spider">
+                Nodejs spider <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://blog.happyday.site/dis/img/head.png" alt="">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">29</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/alex3347" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#bin-webpack-js"><span class="nav-number">1.</span> <span class="nav-text">bin/webpack.js</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#webpack-cli-cli-js"><span class="nav-number">2.</span> <span class="nav-text">webpack-cli/cli.js</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#lib-webpack-js"><span class="nav-number">3.</span> <span class="nav-text">lib/webpack.js</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WebpackOptionsApply"><span class="nav-number">4.</span> <span class="nav-text">WebpackOptionsApply</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#EntryOptionPlugin"><span class="nav-number">5.</span> <span class="nav-text">EntryOptionPlugin</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2016 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder"></span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

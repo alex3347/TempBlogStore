@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="redux提供一个数据存储中心store对象，同时提供了api供外部访问、修改，以此实现应用中共享状态的管理。 入口文件index.js输出的方法如下，我们按顺序分析下每个方法（文中仅展示关键代码，错误提示或细分功能会被省略） 1234567export &amp;#123;  createStore,  combineReducers,  bindActionCreators,  applyMiddle">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redux源码浅析">
+<meta property="og:url" content="https://alex3347.github.io/TempBlogStore/2018/07/26/20180726/index.html">
+<meta property="og:site_name" content="夜雨声繁">
+<meta property="og:description" content="redux提供一个数据存储中心store对象，同时提供了api供外部访问、修改，以此实现应用中共享状态的管理。 入口文件index.js输出的方法如下，我们按顺序分析下每个方法（文中仅展示关键代码，错误提示或细分功能会被省略） 1234567export &amp;#123;  createStore,  combineReducers,  bindActionCreators,  applyMiddle">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-01-17T09:06:15.238Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="redux源码浅析">
+<meta name="twitter:description" content="redux提供一个数据存储中心store对象，同时提供了api供外部访问、修改，以此实现应用中共享状态的管理。 入口文件index.js输出的方法如下，我们按顺序分析下每个方法（文中仅展示关键代码，错误提示或细分功能会被省略） 1234567export &amp;#123;  createStore,  combineReducers,  bindActionCreators,  applyMiddle">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://alex3347.github.io/TempBlogStore/2018/07/26/20180726/">
+
+
+
+
+
+  <title>redux源码浅析 | 夜雨声繁</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">夜雨声繁</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://alex3347.github.io/TempBlogStore/2018/07/26/20180726/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://blog.happyday.site/dis/img/head.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="夜雨声繁">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">redux源码浅析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-26T09:50:17+08:00">
+                2018-07-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>redux提供一个数据存储中心store对象，同时提供了api供外部访问、修改，以此实现应用中共享状态的管理。</p>
+<p>入口文件index.js输出的方法如下，我们按顺序分析下每个方法（文中仅展示关键代码，错误提示或细分功能会被省略）</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> &#123;</span><br><span class="line">  createStore,</span><br><span class="line">  combineReducers,</span><br><span class="line">  bindActionCreators,</span><br><span class="line">  applyMiddleware,</span><br><span class="line">  compose</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="createStore"><a href="#createStore" class="headerlink" title="createStore"></a>createStore</h3><hr>
+<p>store对象的生产方法，该方法以代理模式返回对象store,以下是createStore方法的主要结构<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">var</span> ActionTypes = &#123;</span><br><span class="line">  INIT:<span class="string">`@@redux/INIT<span class="subst">$&#123;randomString()&#125;</span>`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">createStore</span>(<span class="params">reducer, preloadedState, enhancer</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> currentReducer = reducer</span><br><span class="line">    <span class="keyword">let</span> currentState = preloadedState</span><br><span class="line">    <span class="keyword">let</span> currentListeners = []</span><br><span class="line">    <span class="keyword">let</span> nextListeners = currentListeners</span><br><span class="line">    <span class="keyword">let</span> isDispatching = <span class="literal">false</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">getState</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">dispatch</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">subscribe</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">    dispatch(&#123; <span class="attr">type</span>: ActionTypes.INIT &#125;)</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        dispatch,</span><br><span class="line">        subscribe,</span><br><span class="line">        getState</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h5 id="getState"><a href="#getState" class="headerlink" title="getState"></a>getState</h5><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getState</span>(<span class="params"></span>) </span>&#123;<span class="keyword">return</span> currentState&#125;</span><br></pre></td></tr></table></figure>
+<p>只是返回了当前状态对象，这个状态对象以闭包形式存在，store的部分方法会修改该对象</p>
+<h5 id="subscribe"><a href="#subscribe" class="headerlink" title="subscribe"></a>subscribe</h5><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">subscribe</span>(<span class="params">listener</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> isSubscribed = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    ensureCanMutateNextListeners()</span><br><span class="line">    nextListeners.push(listener)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">unsubscribe</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (!isSubscribed) &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      isSubscribed = <span class="literal">false</span></span><br><span class="line"></span><br><span class="line">      ensureCanMutateNextListeners()</span><br><span class="line">      <span class="keyword">const</span> index = nextListeners.indexOf(listener)</span><br><span class="line">      nextListeners.splice(index, <span class="number">1</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>subscribe方法将接收到的listener函数存储在数组nextListeners中，同时返回一个用于注销的函数unsubscribe</p>
+<h5 id="dispatch"><a href="#dispatch" class="headerlink" title="dispatch"></a>dispatch</h5><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">dispatch</span>(<span class="params">action</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      isDispatching = <span class="literal">true</span></span><br><span class="line">      <span class="comment">//currentReducer 为combination函数</span></span><br><span class="line">      currentState = currentReducer(currentState, action)</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      isDispatching = <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> listeners = (currentListeners = nextListeners)</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; listeners.length; i++) &#123;</span><br><span class="line">      <span class="keyword">const</span> listener = listeners[i]</span><br><span class="line">      listener()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> action</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>dispatch方法中，currentReducer为combineReducers返回的combination函数<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">combination</span>(<span class="params">state = &#123;&#125;, action</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (shapeAssertionError) &#123;</span><br><span class="line">      <span class="keyword">throw</span> shapeAssertionError</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">let</span> hasChanged = <span class="literal">false</span></span><br><span class="line">    <span class="keyword">const</span> nextState = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; finalReducerKeys.length; i++) &#123;</span><br><span class="line">      <span class="keyword">const</span> key = finalReducerKeys[i]</span><br><span class="line">      <span class="keyword">const</span> reducer = finalReducers[key]</span><br><span class="line">      <span class="keyword">const</span> previousStateForKey = state[key]</span><br><span class="line">      <span class="keyword">const</span> nextStateForKey = reducer(previousStateForKey, action)</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">typeof</span> nextStateForKey === <span class="string">'undefined'</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> errorMessage = getUndefinedStateErrorMessage(key, action)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(errorMessage)</span><br><span class="line">      &#125;</span><br><span class="line">      nextState[key] = nextStateForKey</span><br><span class="line">      hasChanged = hasChanged || nextStateForKey !== previousStateForKey</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> hasChanged ? nextState : state</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>该函数中finalReducers是个对象，保存了项目中所有注册的reducer函数，之后该函数对finalReducers的key集合做了遍历，其中最关键的操作在于reducer(previousStateForKey, action)，它接收了dispatch的参数action，执行每个finalReducers中的reducer时，都将这个action传递进去，这样没有匹配的情况返回默认state，有匹配即返回新state，从而更新了整个store tree，ps:这里可以看出action的type是不可以重复的，否则会导致多个reducer同时更新</p>
+<p>回到dispatch方法，currentReducer更新了所有reducer中的state状态，之后随即遍历了数组nextListeners，执行其中所有的listener方法</p>
+<p>createStore方法中的dispatch({ type: ActionTypes.INIT })，ActionTypes.INIT的值是随机字符串@@redux/INIT${randomString()}，这样第一次更新所有reducer的state时，所有state都是初始值的形式，形成最初的store tree，再触发所有的listener，使页面获取数据正常显示</p>
+<h3 id="combineReducers"><a href="#combineReducers" class="headerlink" title="combineReducers"></a>combineReducers</h3><hr>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">combineReducers</span>(<span class="params">reducers</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> reducerKeys = <span class="built_in">Object</span>.keys(reducers)</span><br><span class="line">  <span class="keyword">const</span> finalReducers = &#123;&#125;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; reducerKeys.length; i++) &#123;</span><br><span class="line">    <span class="keyword">const</span> key = reducerKeys[i]</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> reducers[key] === <span class="string">'function'</span>) &#123;</span><br><span class="line">      finalReducers[key] = reducers[key]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> finalReducerKeys = <span class="built_in">Object</span>.keys(finalReducers)</span><br><span class="line"></span><br><span class="line">  assertReducerShape(finalReducers)</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">combination</span>(<span class="params">state = &#123;&#125;, action</span>) </span>&#123;&#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>combineReducers方法中的combination函数在分析dispatch时已经讲过了，这里不再赘述</p>
+<p>在返回combination方法前，主要组装了finalReducers对象，该对象上面已经提到，是所有reducer函数的键值对集合。</p>
+<h3 id="bindActionCreators"><a href="#bindActionCreators" class="headerlink" title="bindActionCreators"></a>bindActionCreators</h3><hr>
+<p>惟一会使用到 bindActionCreators 的场景是当你需要把 action creator 往下传到一个组件上，却不想让这个组件觉察到 Redux 的存在，而且不希望把dispatch 或 Redux store 传给它，从bindActionCreators字面意思也可看出该函数的作用是绑定action creator(可能多个)到某个组件中</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">bindActionCreator</span>(<span class="params">actionCreator, dispatch</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> dispatch(actionCreator.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>))</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">bindActionCreators</span>(<span class="params">actionCreators, dispatch</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> actionCreators === <span class="string">'function'</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> bindActionCreator(actionCreators, dispatch)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> keys = <span class="built_in">Object</span>.keys(actionCreators)</span><br><span class="line">  <span class="keyword">const</span> boundActionCreators = &#123;&#125;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; keys.length; i++) &#123;</span><br><span class="line">    <span class="keyword">const</span> key = keys[i]</span><br><span class="line">    <span class="keyword">const</span> actionCreator = actionCreators[key]</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> actionCreator === <span class="string">'function'</span>) &#123;</span><br><span class="line">      boundActionCreators[key] = bindActionCreator(actionCreator, dispatch)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> boundActionCreators</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>bindActionCreators会判断第一个参数是单个函数还是数组，单个函数直接处理，数组则遍历处理，函数的返回值中通过apply来绑定this，以此来实现忽略redux的作用<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> dispatch(actionCreator.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="compose"><a href="#compose" class="headerlink" title="compose"></a>compose</h3><hr>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">compose</span>(<span class="params">...funcs</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (funcs.length === <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="params">arg</span> =&gt;</span> arg</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (funcs.length === <span class="number">1</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> funcs[<span class="number">0</span>]</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> funcs.reduce(<span class="function">(<span class="params">a, b</span>) =&gt;</span> (...args) =&gt; a(b(...args)))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>compose用来使多个函数按顺序执行，比如[funcA,funcB,funcC] compose之后变成 funcA(funcB(funcC())),</p>
+<p>在redux中compose用于组合储存中间件的数组</p>
+<h3 id="applyMiddleware"><a href="#applyMiddleware" class="headerlink" title="applyMiddleware"></a>applyMiddleware</h3><hr>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">applyMiddleware</span>(<span class="params">...middlewares</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="params">createStore</span> =&gt;</span> (...args) =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> store = createStore(...args)</span><br><span class="line">    <span class="keyword">let</span> dispatch = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(</span><br><span class="line">        <span class="string">`Dispatching while constructing your middleware is not allowed. `</span> +</span><br><span class="line">          <span class="string">`Other middleware would not be applied to this dispatch.`</span></span><br><span class="line">      )</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> middlewareAPI = &#123;</span><br><span class="line">      getState: store.getState,</span><br><span class="line">      dispatch: <span class="function">(<span class="params">...args</span>) =&gt;</span> dispatch(...args)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> chain = middlewares.map(<span class="function"><span class="params">middleware</span> =&gt;</span> middleware(middlewareAPI))</span><br><span class="line">    dispatch = compose(...chain)(store.dispatch)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      ...store,</span><br><span class="line">      dispatch</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>applyMiddleware是个高阶函数，内部调用了compose，同时将dispatch作为参数传递进去，相当于dispatch = funcA(funcB(funcC(store.dispatch))),给dispatch增加了每个中间件的功能</p>
+<p>这里以redux-thunk为例，简要说明下中间件拿到dispatch做了什么</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createThunkMiddleware</span>(<span class="params">extraArgument</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function">(<span class="params">&#123; dispatch, getState &#125;</span>) =&gt;</span> next =&gt; <span class="function"><span class="params">action</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> action === <span class="string">'function'</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> action(dispatch, getState, extraArgument);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> next(action);</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> thunk = createThunkMiddleware();</span><br><span class="line">thunk.withExtraArgument = createThunkMiddleware;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> thunk;</span><br></pre></td></tr></table></figure>
+<p>Redux-thunk只是对action进行了判断，让dispatch的参数支持函数形式。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/06/20/20180620/" rel="next" title="setTimeout/setImmediate/process.nextTick">
+                <i class="fa fa-chevron-left"></i> setTimeout/setImmediate/process.nextTick
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/07/28/20180728/" rel="prev" title="react-redux源码浅析">
+                react-redux源码浅析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://blog.happyday.site/dis/img/head.png" alt="">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">29</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/alex3347" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#createStore"><span class="nav-number">1.</span> <span class="nav-text">createStore</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#getState"><span class="nav-number">1.0.1.</span> <span class="nav-text">getState</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#subscribe"><span class="nav-number">1.0.2.</span> <span class="nav-text">subscribe</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#dispatch"><span class="nav-number">1.0.3.</span> <span class="nav-text">dispatch</span></a></li></ol></li></ol><li class="nav-item nav-level-3"><a class="nav-link" href="#combineReducers"><span class="nav-number">2.</span> <span class="nav-text">combineReducers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bindActionCreators"><span class="nav-number">3.</span> <span class="nav-text">bindActionCreators</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#compose"><span class="nav-number">4.</span> <span class="nav-text">compose</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#applyMiddleware"><span class="nav-number">5.</span> <span class="nav-text">applyMiddleware</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2016 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder"></span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

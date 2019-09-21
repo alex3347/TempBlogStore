@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="之前也写过Nodejs爬虫项目，当时初学Nodejs，做出的项目感觉不系统，后来又重构了phantomjs版本，以及目前的puppeteer版本，这里简单介绍下涉及的技术点同时贴出关键代码，项目地址 目标网站 https://www.dmzj.com/info/blame.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nodejs spider">
+<meta property="og:url" content="https://alex3347.github.io/TempBlogStore/2018/10/20/20181020/index.html">
+<meta property="og:site_name" content="夜雨声繁">
+<meta property="og:description" content="之前也写过Nodejs爬虫项目，当时初学Nodejs，做出的项目感觉不系统，后来又重构了phantomjs版本，以及目前的puppeteer版本，这里简单介绍下涉及的技术点同时贴出关键代码，项目地址 目标网站 https://www.dmzj.com/info/blame.html">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://alex3347.github.io/2018/10/20/20181020/1.png">
+<meta property="og:image" content="https://alex3347.github.io/2018/10/20/20181020/2.png">
+<meta property="og:image" content="https://alex3347.github.io/2018/10/20/20181020/3.png">
+<meta property="og:image" content="https://alex3347.github.io/2018/10/20/20181020/4.png">
+<meta property="og:image" content="https://alex3347.github.io/2018/10/20/20181020/5.png">
+<meta property="og:image" content="https://alex3347.github.io/2018/10/20/20181020/6.png">
+<meta property="og:updated_time" content="2019-07-20T03:03:56.864Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Nodejs spider">
+<meta name="twitter:description" content="之前也写过Nodejs爬虫项目，当时初学Nodejs，做出的项目感觉不系统，后来又重构了phantomjs版本，以及目前的puppeteer版本，这里简单介绍下涉及的技术点同时贴出关键代码，项目地址 目标网站 https://www.dmzj.com/info/blame.html">
+<meta name="twitter:image" content="https://alex3347.github.io/2018/10/20/20181020/1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://alex3347.github.io/TempBlogStore/2018/10/20/20181020/">
+
+
+
+
+
+  <title>Nodejs spider | 夜雨声繁</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">夜雨声繁</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://alex3347.github.io/TempBlogStore/2018/10/20/20181020/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://blog.happyday.site/dis/img/head.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="夜雨声繁">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Nodejs spider</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-20T13:02:30+08:00">
+                2018-10-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>之前也写过Nodejs爬虫项目，当时初学Nodejs，做出的项目感觉不系统，后来又重构了phantomjs版本，以及目前的puppeteer版本，这里简单介绍下涉及的技术点同时贴出关键代码，<a href="https://github.com/alex3347/spiderForComic" target="_blank" rel="noopener">项目地址</a></p>
+<p>目标网站 <a href="https://www.dmzj.com/info/blame.html" target="_blank" rel="noopener">https://www.dmzj.com/info/blame.html</a></p>
+<a id="more"></a>
+<p>预期目的 把一部漫画的所有图片分章节下载到本地</p>
+<p>我们先看下Nodejs 爬虫常用的一些模块或工具：</p>
+<p>Puppeteer:<br>对chromium做的接口封装，而且目前已公布要支持firefox内核(短期来看击败其他同类模块没悬念)<br>抓取内容时可以解析JS 适用于动态渲染页面 支持ES6<br>调试十分便捷<br>Google维护<br>其他功能：<br>​    利用网页生成PDF、图片<br>​    爬取SPA应用，并生成预渲染内容（即服务端渲染）<br>​    自动化表单提交、UI测试、键盘输入等<br>​    自动化测试</p>
+<p>PhantomJS:<br>headless browser  webkit内核<br>抓取内容时可以解析JS 适用于动态渲染页面 但不支持ES6<br>调试比较黑盒<br>API丰富 目前缺少维护<br>有对应的Nodejs环境模块 phantomjs-node</p>
+<p>cheerio：<br>jQuery Core 子集<br>不能渲染css以及js<br>适用于静态页面以及字符串模版的情况</p>
+<p>async：<br>异步流程控制模块<br>包括常用的串行和并行</p>
+<p>http/https：<br>网络请求模块<br>同类型库 request</p>
+<p>fs：<br>文件系统模块，用于操作本地文件</p>
+<p>之后我们来分析目标网站<a href="https://www.dmzj.com/info/blame.html" target="_blank" rel="noopener">https://www.dmzj.com/info/blame.html</a><br>在当前页面我们需要获取所有章节的跳转链接 章节名称，都是常规的DOM操作<br><img src="/2018/10/20/20181020/1.png"></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> list = <span class="built_in">document</span>.getElementsByClassName(<span class="string">'list_con_li'</span>)[<span class="number">0</span>];</span><br><span class="line"><span class="keyword">let</span> listItem = list.getElementsByTagName(<span class="string">'li'</span>);</span><br><span class="line"><span class="keyword">let</span> tempArray = [];</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;listItem.length;i++)&#123;</span><br><span class="line"><span class="keyword">let</span> current = listItem[i];</span><br><span class="line"><span class="keyword">let</span> address = current.getElementsByTagName(<span class="string">'a'</span>)[<span class="number">0</span>].href;</span><br><span class="line"><span class="keyword">let</span> title = current.getElementsByClassName(<span class="string">'list_con_zj'</span>)[<span class="number">0</span>].innerText;</span><br><span class="line"><span class="keyword">let</span> tempObject = &#123;&#125;;</span><br><span class="line">tempObject[<span class="string">'title'</span>] = title;</span><br><span class="line">tempObject[<span class="string">'address'</span>] = address;</span><br><span class="line">tempArray.push(tempObject);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> tempArray;</span><br></pre></td></tr></table></figure>
+<p>之后我们点开一个章节 这里需要获取所有图片链接 然后在程序中用https请求的方式下载到本地<br>可以看到在select按钮中包含了所有的分页图片地址，如下图<br><img src="/2018/10/20/20181020/2.png"><br>还是同样的常规DOM操作</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> page_select = <span class="built_in">document</span>.getElementById(<span class="string">'page_select'</span>);</span><br><span class="line"><span class="keyword">if</span>(page_select)&#123;</span><br><span class="line"><span class="keyword">let</span> options = page_select.options;</span><br><span class="line"><span class="keyword">let</span> reg = <span class="regexp">/(\w+):\/\/([^/:]+)(:\d*)?([^# ]*)/</span>;</span><br><span class="line"><span class="keyword">let</span> hostName = options[<span class="number">0</span>].value.match(reg)[<span class="number">2</span>];<span class="comment">//images.dmzj.com</span></span><br><span class="line"><span class="keyword">let</span> collection = [];</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;options.length;i++)&#123;</span><br><span class="line"><span class="keyword">let</span> current = options[i].value;</span><br><span class="line">collection.push(current.match(reg)[<span class="number">4</span>]);<span class="comment">// /b/Blame!/Vol_01a/BLAME_第一卷_001.jpg</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> &#123;<span class="string">'hostName'</span>:hostName,<span class="string">'collection'</span>:collection&#125;;</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line"><span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看到这里你可能会想，既然分页图片地址有规律可循，为什么不自动生成，而是要每个都push进数组呢</p>
+<p>这是因为这个网站做了反爬虫设置，不同卷的图片地址不完全一致，比如：</p>
+<p><a href="https://images.dmzj.com/b/Blame!/第09卷/Blame09-002.jpg" target="_blank" rel="noopener">https://images.dmzj.com/b/Blame!/第09卷/Blame09-002.jpg</a></p>
+<p><a href="https://images.dmzj.com/b/Blame!/Vol_08/2.jpg" target="_blank" rel="noopener">https://images.dmzj.com/b/Blame!/Vol_08/2.jpg</a></p>
+<p>为每个章节图片地址都做适配规则会导致工作量很大，而且不具有通用性</p>
+<p>之后我们来试验一下https请求图片地址能不能成功</p>
+<p>打开postman测试一下，发现被403</p>
+<img src="/2018/10/20/20181020/3.png">
+<p>我们看一下原图请求时的请求头</p>
+<img src="/2018/10/20/20181020/4.png">
+<p>可以发现可能导致403的原因大概率是Referer字段，我们把它添加到postman中测试一下，请求成功，如下图</p>
+<img src="/2018/10/20/20181020/5.png">
+<p>网页结构研究完毕，可以正式开始写代码了</p>
+<p>先看下文件结构</p>
+<img src="/2018/10/20/20181020/6.png">
+<p>lib里存放章节页面和分页面对应的爬虫，imgs文件夹存放请求下来的图片，bin是commander.js需要的入口文件，commander.js用于命令行工具的开发，后续可能会写篇文章单独来分享，这里暂不展开。</p>
+<p>我们先来看章节页面爬虫代码</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> puppeteer = <span class="built_in">require</span>(<span class="string">'puppeteer'</span>);</span><br><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">const</span> &#123;subPageSpider&#125; = <span class="built_in">require</span>(<span class="string">'./subPageSpider'</span>);</span><br><span class="line"><span class="keyword">const</span> asyncModule = <span class="built_in">require</span>(<span class="string">'async'</span>);</span><br><span class="line"><span class="keyword">const</span> log = <span class="built_in">console</span>.log;</span><br><span class="line"><span class="keyword">const</span> projectPath = process.cwd();</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">mainPageSpider</span>(<span class="params">url,comicName</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> pageInfoArray = [];</span><br><span class="line">    <span class="keyword">const</span> browser = <span class="keyword">await</span> puppeteer.launch(&#123;</span><br><span class="line">        ignoreHTTPSErrors: <span class="literal">true</span>,</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">const</span> page = <span class="keyword">await</span> browser.newPage();</span><br><span class="line">    <span class="keyword">await</span> page.goto(url);</span><br><span class="line">    pageInfoArray = <span class="keyword">await</span> page.evaluate(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="comment">//获取baseUrl</span></span><br><span class="line">        <span class="keyword">let</span> list = <span class="built_in">document</span>.getElementsByClassName(<span class="string">'list_con_li'</span>)[<span class="number">0</span>];</span><br><span class="line">        <span class="keyword">let</span> listItem = list.getElementsByTagName(<span class="string">'li'</span>);</span><br><span class="line">        <span class="keyword">let</span> tempArray = [];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;listItem.length;i++)&#123;</span><br><span class="line">            <span class="keyword">let</span> current = listItem[i];</span><br><span class="line">            <span class="keyword">let</span> address = current.getElementsByTagName(<span class="string">'a'</span>)[<span class="number">0</span>].href;</span><br><span class="line">            <span class="keyword">let</span> title = current.getElementsByClassName(<span class="string">'list_con_zj'</span>)[<span class="number">0</span>].innerText;</span><br><span class="line">            <span class="keyword">let</span> tempObject = &#123;&#125;;</span><br><span class="line">            tempObject[<span class="string">'title'</span>] = title;</span><br><span class="line">            tempObject[<span class="string">'address'</span>] = address;</span><br><span class="line">            tempArray.push(tempObject);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> tempArray;</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">await</span> browser.close();</span><br><span class="line">    log(<span class="string">'分页面数量：'</span>,pageInfoArray.length);</span><br><span class="line">    log(<span class="string">'****************************'</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//建立图片文件夹</span></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">bulidFolder</span>(<span class="params">path</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(!fs.existsSync(path))&#123;</span><br><span class="line">            fs.mkdirSync(path)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">let</span> rootPath = <span class="string">`<span class="subst">$&#123;projectPath&#125;</span>/imgs/<span class="subst">$&#123;comicName&#125;</span>`</span>;</span><br><span class="line">    bulidFolder(rootPath);</span><br><span class="line"></span><br><span class="line">    pageInfoArray.forEach(<span class="function">(<span class="params">element</span>)=&gt;</span>&#123;</span><br><span class="line">        <span class="keyword">let</span> path = <span class="string">`<span class="subst">$&#123;projectPath&#125;</span>/imgs/<span class="subst">$&#123;comicName&#125;</span>/<span class="subst">$&#123;element.title&#125;</span>`</span>;</span><br><span class="line">        bulidFolder(path);</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//分页面任务数组</span></span><br><span class="line">    <span class="keyword">let</span> tasks = [];</span><br><span class="line"></span><br><span class="line">    <span class="comment">//分页面爬取图片</span></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">runSubPageSpider</span>(<span class="params">element</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">let</span> url = element.address;</span><br><span class="line">        <span class="keyword">let</span> title = element.title;</span><br><span class="line">        <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params">callback</span>)</span>&#123;</span><br><span class="line">            subPageSpider(url,title,comicName,callback);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    pageInfoArray.forEach(<span class="function">(<span class="params">element</span>)=&gt;</span>&#123;</span><br><span class="line">        <span class="keyword">let</span> fn = runSubPageSpider(element);</span><br><span class="line">        tasks.push(fn);</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//串行控制</span></span><br><span class="line">    asyncModule.series(tasks, <span class="function"><span class="keyword">function</span>(<span class="params">err, values</span>) </span>&#123;</span><br><span class="line">        log(<span class="string">'分页面任务状态：'</span>)</span><br><span class="line">        log(values);</span><br><span class="line">     &#125;);</span><br><span class="line">    </span><br><span class="line">  &#125;</span><br><span class="line">  exports.mainPageSpider = mainPageSpider;</span><br></pre></td></tr></table></figure>
+<p>首先我们生成了puppeteer实例，让它打开chromium的headless模式，等待页面渲染成功之后开始解析DOM，获取分章节的跳转链接、章节名称，之后开始在imgs文件夹下生成以章节名称命名的文件夹，之后用asyncModule.series方法串行管理每个章节图片的下载任务，这里不用并行主要是因为容易被目标网站封禁IP，当然这里也可以分出其他线程来执行任务。<br>之后我们来看子页面爬虫的代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> puppeteer = <span class="built_in">require</span>(<span class="string">'puppeteer'</span>);</span><br><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">const</span> https = <span class="built_in">require</span>(<span class="string">'https'</span>);</span><br><span class="line"><span class="keyword">const</span> asyncModule = <span class="built_in">require</span>(<span class="string">'async'</span>);</span><br><span class="line"><span class="keyword">const</span> log = <span class="built_in">console</span>.log;</span><br><span class="line"><span class="keyword">const</span> projectPath = process.cwd();</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">subPageSpider</span>(<span class="params">url,title,comicName,seriesCallback</span>) </span>&#123;</span><br><span class="line">    log(<span class="string">'开始解析：'</span>,title)</span><br><span class="line">    <span class="keyword">let</span> pageInfoObject = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> browser = <span class="keyword">await</span> puppeteer.launch(&#123;</span><br><span class="line">        ignoreHTTPSErrors: <span class="literal">true</span>,</span><br><span class="line">        <span class="comment">// devtools: true</span></span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">const</span> page = <span class="keyword">await</span> browser.newPage();</span><br><span class="line">    <span class="comment">//启用请求拦截器</span></span><br><span class="line">    <span class="keyword">await</span> page.setRequestInterception(<span class="literal">true</span>);</span><br><span class="line">    page.on(<span class="string">'request'</span>, interceptedRequest =&gt; &#123;</span><br><span class="line">        <span class="keyword">if</span> (interceptedRequest.url().startsWith(<span class="string">'https://afpeng'</span>))&#123;</span><br><span class="line">            interceptedRequest.abort();</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            interceptedRequest.continue();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">await</span> page.goto(url);</span><br><span class="line">    </span><br><span class="line">    pageInfoObject = <span class="keyword">await</span> page.evaluate(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">let</span> page_select = <span class="built_in">document</span>.getElementById(<span class="string">'page_select'</span>);</span><br><span class="line">        <span class="keyword">if</span>(page_select)&#123;</span><br><span class="line">            <span class="keyword">let</span> options = page_select.options;</span><br><span class="line">            <span class="keyword">let</span> reg = <span class="regexp">/(\w+):\/\/([^/:]+)(:\d*)?([^# ]*)/</span>;</span><br><span class="line">            <span class="keyword">let</span> hostName = options[<span class="number">0</span>].value.match(reg)[<span class="number">2</span>];<span class="comment">//images.dmzj.com</span></span><br><span class="line">            <span class="keyword">let</span> collection = [];</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;options.length;i++)&#123;</span><br><span class="line">                <span class="keyword">let</span> current = options[i].value;</span><br><span class="line">                collection.push(current.match(reg)[<span class="number">4</span>]);<span class="comment">// /b/Blame!/Vol_01a/BLAME_第一卷_001.jpg</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> &#123;<span class="string">'hostName'</span>:hostName,<span class="string">'collection'</span>:collection&#125;;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="keyword">await</span> browser.close();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(pageInfoObject)&#123;</span><br><span class="line">        log(<span class="string">'分页面图片数量：'</span>,pageInfoObject.collection.length);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        log(<span class="string">'-----------------------------'</span>);</span><br><span class="line">        seriesCallback(<span class="literal">null</span>,<span class="string">`分页面【<span class="subst">$&#123;title&#125;</span>】下载失败`</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="comment">//图片下载逻辑</span></span><br><span class="line">    <span class="keyword">let</span> hostName = pageInfoObject.hostName;</span><br><span class="line">    <span class="keyword">let</span> collection = pageInfoObject.collection;</span><br><span class="line">    <span class="keyword">let</span> test = [<span class="string">'/b/Blame!/第10卷/Blame10-001.jpg'</span>,<span class="string">'/b/Blame!/第10卷/Blame10-002.jpg'</span>];</span><br><span class="line">    <span class="comment">//并行异步控制</span></span><br><span class="line">    asyncModule.mapLimit(collection.slice(<span class="number">0</span>,<span class="number">6</span>),<span class="number">2</span>,<span class="function"><span class="keyword">function</span>(<span class="params">i,callback</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">let</span> requestPath = <span class="built_in">encodeURI</span>(i);</span><br><span class="line">        <span class="keyword">let</span> imgPath=<span class="string">`<span class="subst">$&#123;projectPath&#125;</span>/imgs/<span class="subst">$&#123;comicName&#125;</span>/<span class="subst">$&#123;title&#125;</span>/<span class="subst">$&#123;collection.indexOf(i)&#125;</span>.jpg`</span>;</span><br><span class="line">        <span class="keyword">let</span> options = &#123;</span><br><span class="line">            hostname:hostName,</span><br><span class="line">            path:requestPath,</span><br><span class="line">            headers:&#123;</span><br><span class="line">                <span class="string">'Referer'</span>:url</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        https.get(options,<span class="function"><span class="keyword">function</span>(<span class="params">res</span>)</span>&#123;</span><br><span class="line">            <span class="keyword">let</span> imgData = <span class="string">""</span>;</span><br><span class="line">            res.setEncoding(<span class="string">"binary"</span>);</span><br><span class="line">            res.on(<span class="string">"data"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">chunk</span>)</span>&#123;</span><br><span class="line">                imgData+=chunk;</span><br><span class="line">            &#125;);</span><br><span class="line">            res.on(<span class="string">"end"</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">                fs.writeFileSync(imgPath, imgData, <span class="string">"binary"</span>);</span><br><span class="line">                callback(<span class="literal">null</span>);</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;,<span class="function"><span class="keyword">function</span>(<span class="params">err,result</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(err)&#123;</span><br><span class="line">            log(<span class="string">`分页面【<span class="subst">$&#123;title&#125;</span>】下载失败`</span>);</span><br><span class="line">            log(<span class="string">'-----------------------------'</span>);</span><br><span class="line">            seriesCallback(<span class="literal">null</span>,<span class="string">`分页面【<span class="subst">$&#123;title&#125;</span>】下载失败`</span>)</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            log(<span class="string">`分页面【<span class="subst">$&#123;title&#125;</span>】下载完成`</span>);</span><br><span class="line">            log(<span class="string">'-----------------------------'</span>);</span><br><span class="line">            seriesCallback(<span class="literal">null</span>,<span class="string">`分页面【<span class="subst">$&#123;title&#125;</span>】下载完成`</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">  exports.subPageSpider = subPageSpider;</span><br></pre></td></tr></table></figure></p>
+<p>和章节页面爬虫的区别主要在于，启用了请求拦截器，由于网络问题，有某个链接的资源请求会超时，导致页面加载很慢，这时我们通过用请求拦截的方式直接禁止这个请求的发起。请求拦截器还可以用于拦截图片请求，让页面加载更加迅速。在获取所有图片地址后，我们通过asyncModule.mapLimit进行并发请求，同时可以限制并发数量。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/09/21/20180921/" rel="next" title="webpack处理流程浅析">
+                <i class="fa fa-chevron-left"></i> webpack处理流程浅析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/11/02/20181102/" rel="prev" title="Chrome devtool Memory实战">
+                Chrome devtool Memory实战 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://blog.happyday.site/dis/img/head.png" alt="">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">29</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/alex3347" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2016 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder"></span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
